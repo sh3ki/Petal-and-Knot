@@ -261,6 +261,31 @@ function App() {
   const menuButton = useRef<HTMLButtonElement>(null)
   useEffect(() => { const onScroll = () => setScrolled(window.scrollY > 24); onScroll(); window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll) }, [])
   useEffect(() => {
+    const hash = window.location.hash
+    const target = document.getElementById(decodeURIComponent(hash.slice(1)))
+    if (!hash || !target) return
+    let active = true
+    let interrupted = false
+    let frame = 0
+    const interrupt = () => { interrupted = true }
+    window.addEventListener('wheel', interrupt, { passive: true })
+    window.addEventListener('touchstart', interrupt, { passive: true })
+    const loaded = document.readyState === 'complete'
+      ? Promise.resolve()
+      : new Promise<void>(resolve => window.addEventListener('load', () => resolve(), { once: true }))
+    Promise.all([loaded, document.fonts.ready]).then(() => {
+      if (active) frame = window.requestAnimationFrame(() => {
+        if (!interrupted && window.location.hash === hash) target.scrollIntoView({ behavior: 'instant', block: 'start' })
+      })
+    })
+    return () => {
+      active = false
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('wheel', interrupt)
+      window.removeEventListener('touchstart', interrupt)
+    }
+  }, [])
+  useEffect(() => {
     if (!menuOpen) return
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
