@@ -254,12 +254,34 @@ function GalleryLightbox({ index, onClose, onChange }: { index: number | null; o
 function App() {
   const [filter, setFilter] = useState<Filter>('All Flowers')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [activeNav, setActiveNav] = useState('home')
   const [selectedProduct, setSelectedProduct] = useState({ name: '', token: 0 })
   const [occasion, setOccasion] = useState({ name: '', token: 0 })
   const [lightbox, setLightbox] = useState<number | null>(null)
   const [scrolled, setScrolled] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   useEffect(() => { const onScroll = () => setScrolled(window.scrollY > 24); onScroll(); window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll) }, [])
+  useEffect(() => {
+    const sectionToNav: Record<string, string> = { home: 'home', intro: 'home', collections: 'collections', bestsellers: 'bestsellers', custom: 'custom', occasions: 'custom', story: 'story', gallery: 'story', faq: 'story', contact: 'contact' }
+    const sections = Object.keys(sectionToNav).map(id => document.getElementById(id)).filter((section): section is HTMLElement => Boolean(section))
+    let frame = 0
+    const updateActiveNav = () => {
+      frame = 0
+      const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0
+      const marker = window.scrollY + headerHeight + window.innerHeight * .24
+      let current = sections[0]?.id ?? 'home'
+      for (const section of sections) {
+        if (section.offsetTop <= marker) current = section.id
+        else break
+      }
+      setActiveNav(sectionToNav[current] ?? 'home')
+    }
+    const onScroll = () => { if (!frame) frame = window.requestAnimationFrame(updateActiveNav) }
+    updateActiveNav()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
+  }, [])
   useEffect(() => {
     const hash = window.location.hash
     const target = document.getElementById(decodeURIComponent(hash.slice(1)))
@@ -307,6 +329,7 @@ function App() {
   function chooseOccasion(value: string) { setOccasion(current => ({ name: value, token: current.token + 1 })); scrollTo('custom') }
   function nav(id: string) {
     setMenuOpen(false)
+    setActiveNav(id)
     if (window.location.hash !== `#${id}`) window.history.pushState(null, '', `#${id}`)
     scrollTo(id)
   }
@@ -319,13 +342,13 @@ function App() {
       <div className="nav-container">
         <a href="#home" className="logo-link" onClick={e => { e.preventDefault(); nav('home') }}><Logo /></a>
         <nav className="desktop-nav" aria-label="Main navigation">
-          {[['Home', 'home'], ['Collections', 'collections'], ['Bestsellers', 'bestsellers'], ['Order', 'custom'], ['Our Story', 'story'], ['Contact', 'contact']].map(([text, id]) => <a key={id} href={`#${id}`} onClick={event => { event.preventDefault(); nav(id) }}>{text}</a>)}
+          {[['Home', 'home'], ['Collections', 'collections'], ['Bestsellers', 'bestsellers'], ['Order', 'custom'], ['Our Story', 'story'], ['Contact', 'contact']].map(([text, id]) => <a key={id} className={activeNav === id ? 'is-active' : undefined} aria-current={activeNav === id ? 'page' : undefined} href={`#${id}`} onClick={event => { event.preventDefault(); nav(id) }}>{text}</a>)}
         </nav>
         <button className="button button-small button-primary nav-cta" onClick={() => nav('custom')}>Order a Bouquet <ArrowUpRight size={15} /></button>
         <button ref={menuButton} className="menu-toggle" type="button" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X /> : <Menu />}</button>
       </div>
       <AnimatePresence>{menuOpen && <motion.nav id="mobile-navigation" className="mobile-nav" aria-label="Mobile navigation" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: .22 }}>
-        {[['Home', 'home'], ['Collections', 'collections'], ['Bestsellers', 'bestsellers'], ['Order a Bouquet', 'custom'], ['Our Story', 'story'], ['Contact', 'contact']].map(([text, id], index) => <a href={`#${id}`} key={id} onClick={event => { event.preventDefault(); nav(id) }}><span>0{index + 1}</span>{text}<ArrowUpRight size={18} /></a>)}
+        {[['Home', 'home'], ['Collections', 'collections'], ['Bestsellers', 'bestsellers'], ['Order a Bouquet', 'custom'], ['Our Story', 'story'], ['Contact', 'contact']].map(([text, id], index) => <a className={activeNav === id ? 'is-active' : undefined} aria-current={activeNav === id ? 'page' : undefined} href={`#${id}`} key={id} onClick={event => { event.preventDefault(); nav(id) }}><span>0{index + 1}</span>{text}<ArrowUpRight size={18} /></a>)}
       </motion.nav>}</AnimatePresence>
     </header>
 
