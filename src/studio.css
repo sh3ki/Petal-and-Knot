@@ -786,3 +786,22 @@ h1 em, h2 em {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
 }
+
+/* Keep the tab matching the section in view visibly selected. */
+.desktop-nav a.is-active {
+  color: var(--deep-rose);
+}
+
+.desktop-nav a.is-active::after {
+  width: 100%;
+  height: 2px;
+}
+
+.mobile-nav a.is-active {
+  color: var(--deep-rose);
+  border-top-color: var(--deep-rose);
+}
+
+.mobile-nav a.is-active span {
+  color: var(--deep-rose);
+}
