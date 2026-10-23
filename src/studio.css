@@ -800,6 +800,17 @@ h1 em, h2 em {
 .mobile-nav a.is-active {
   color: var(--deep-rose);
   border-top-color: var(--deep-rose);
+  position: relative;
+}
+
+.mobile-nav a.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--deep-rose);
 }
 
 .mobile-nav a.is-active span {
